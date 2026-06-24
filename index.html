@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Foot Measurement Cards</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --panel: #ffffff;
+    --ink: #1f2933;
+    --muted: #6b7280;
+    --line: #d9dee5;
+    --accent: #2563eb;
+    --accent-soft: #e8f0fe;
+    --danger: #dc2626;
+    --ok: #16a34a;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 { font-size: 18px; margin: 0; flex: 1; }
+  header .count { color: var(--muted); font-size: 13px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 8px;
+    padding: 8px 14px;
+    transition: background .12s, border-color .12s;
+  }
+  button:hover { background: #f0f3f8; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: #1d4ed8; }
+  button.danger { color: var(--danger); border-color: #f1c2c2; }
+  button.danger:hover { background: #fde8e8; }
+  button.ghost { border-color: transparent; background: transparent; color: var(--muted); padding: 6px 8px; }
+  button.ghost:hover { background: #eef1f5; color: var(--ink); }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .toolbar input[type="search"] {
+    flex: 1;
+    min-width: 180px;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font: inherit;
+  }
+
+  /* Card grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card-top { display: flex; align-items: flex-start; gap: 8px; }
+  .card-title { font-weight: 600; font-size: 16px; flex: 1; word-break: break-word; }
+  .card-side {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: var(--muted); }
+  .chip { background: #eef1f5; border-radius: 6px; padding: 2px 8px; }
+  table.measures { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.measures th, table.measures td { text-align: right; padding: 4px 6px; }
+  table.measures th:first-child, table.measures td:first-child { text-align: left; color: var(--muted); }
+  table.measures thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; vertical-align: middle; border: 1px solid rgba(0,0,0,.15); margin-right: 5px; }
+  .card-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 6px; }
+  .card-actions button { flex: 1; padding: 6px; font-size: 13px; }
+  .card .date { font-size: 11px; color: var(--muted); }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 60px 20px;
+    border: 2px dashed var(--line);
+    border-radius: var(--radius);
+  }
+
+  /* Modal */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,.45);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 30px 16px;
+    overflow-y: auto;
+    z-index: 50;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--panel);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 640px;
+    padding: 22px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.25);
+  }
+  .modal h2 { margin: 0 0 16px; font-size: 18px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+  .field input, .field select {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font: inherit;
+  }
+  .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .row-4 { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 10px; align-items: end; }
+  fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0 0 16px; }
+  legend { font-size: 13px; font-weight: 600; padding: 0 6px; color: var(--ink); }
+  .measure-head { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-bottom: 6px; }
+  .row-4 .nm { font-size: 13px; font-weight: 600; align-self: center; }
+  .row-4 .adapt { display: flex; align-items: center; justify-content: center; height: 38px; }
+  .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; }
+  .modal-actions .right { display: flex; gap: 10px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: -4px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>👟 Foot Measurement Cards</h1>
+  <span class="count" id="count"></span>
+  <button class="ghost" id="exportBtn" title="Export all cards to a JSON file">Export</button>
+  <button class="ghost" id="importBtn" title="Import cards from a JSON file">Import</button>
+  <button class="primary" id="newBtn">+ New Card</button>
+</header>
+
+<div class="wrap">
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Search by name, size, system…" />
+  </div>
+  <div id="cards" class="grid"></div>
+  <div id="empty" class="empty" style="display:none">
+    No cards yet. Click <strong>+ New Card</strong> to record your first set of measurements.
+  </div>
+</div>
+
+<!-- Editor modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">New Card</h2>
+    <form id="form">
+      <div class="field">
+        <label for="f-name">Card name</label>
+        <input id="f-name" placeholder="e.g. My Right Foot — June 2026" required />
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="f-system">Sizing System</label>
+          <select id="f-system">
+            <option>US Men</option>
+            <option>US Women</option>
+            <option>UK</option>
+            <option>EU</option>
+            <option>Japan (cm)</option>
+            <option>Mondopoint</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-size">Size</label>
+          <input id="f-size" placeholder="10.5" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="f-width">Width</label>
+          <select id="f-width">
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+            <option>E</option><option>EE</option><option>EEE</option>
+            <option>EEEE</option><option>EEEEE</option><option>EEEEEE</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-side">Side</label>
+          <select id="f-side">
+            <option>Right</option>
+            <option>Left</option>
+            <option>Both / Pair</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-color">Color</label>
+        <input id="f-color" placeholder="Sky Blue" />
+      </div>
+
+      <fieldset>
+        <legend>Measurements (mm)</legend>
+        <div class="measure-head">
+          <span>Parameter</span>
+          <span style="text-align:right">Foot</span>
+          <span style="text-align:right">Last (Bottom)</span>
+          <span>Adapt</span>
+        </div>
+        <div id="measureRows"></div>
+      </fieldset>
+
+      <div class="field">
+        <label for="f-notes">Notes</label>
+        <input id="f-notes" placeholder="Templates used, fit notes, etc." />
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="danger" id="deleteBtn" style="display:none">Delete</button>
+        <div class="right">
+          <button type="button" id="cancelBtn">Cancel</button>
+          <button type="submit" class="primary">Save Card</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="application/json" style="display:none" />
+
+<script>
+const STORE_KEY = "footMeasurementCards.v1";
+
+// Parameter definitions (order + labels matching the Build Shoe Last dialog)
+const PARAMS = [
+  { key: "length",      label: "Length" },
+  { key: "ballGirth",   label: "Ball Girth" },
+  { key: "instepGirth", label: "Instep Girth" },
+  { key: "ballWidth",   label: "Ball Width" },
+  { key: "heelHeight",  label: "Heel Height" },
+];
+
+// ---- storage helpers ----
+function loadCards() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch { return []; }
+}
+function saveCards(cards) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(cards));
+}
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+let cards = loadCards();
+let editingId = null;
+
+// ---- DOM refs ----
+const el = (id) => document.getElementById(id);
+const cardsEl = el("cards");
+const emptyEl = el("empty");
+const overlay = el("overlay");
+const form = el("form");
+const measureRows = el("measureRows");
+const searchEl = el("search");
+
+// ---- rendering ----
+function fmt(v) { return (v === "" || v == null) ? "—" : v; }
+
+function colorToCss(name) {
+  if (!name) return "transparent";
+  const t = document.createElement("div");
+  t.style.color = "";
+  t.style.color = name.trim().toLowerCase().replace(/\s+/g, "");
+  return t.style.color || "transparent";
+}
+
+function render() {
+  const q = searchEl.value.trim().toLowerCase();
+  const list = cards
+    .filter(c => {
+      if (!q) return true;
+      const hay = [c.name, c.system, c.size, c.width, c.side, c.color, c.notes].join(" ").toLowerCase();
+      return hay.includes(q);
+    })
+    .sort((a, b) => (b.updated || 0) - (a.updated || 0));
+
+  el("count").textContent = cards.length ? `${cards.length} card${cards.length > 1 ? "s" : ""}` : "";
+  cardsEl.innerHTML = "";
+  emptyEl.style.display = cards.length === 0 ? "block" : "none";
+
+  for (const c of list) {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const rows = PARAMS.map(p => {
+      const m = (c.measures && c.measures[p.key]) || {};
+      return `<tr>
+        <td>${p.label}${m.adapt ? " ✓" : ""}</td>
+        <td>${fmt(m.foot)}</td>
+        <td>${fmt(m.last)}</td>
+      </tr>`;
+    }).join("");
+
+    const updated = c.updated ? new Date(c.updated).toLocaleDateString() : "";
+
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="card-title">${escapeHtml(c.name || "Untitled")}</div>
+        <span class="card-side">${escapeHtml(c.side || "")}</span>
+      </div>
+      <div class="card-meta">
+        <span class="chip">${escapeHtml(c.system || "")} ${escapeHtml(c.size || "")}</span>
+        <span class="chip">Width ${escapeHtml(c.width || "—")}</span>
+        ${c.color ? `<span class="chip"><span class="swatch" style="background:${colorToCss(c.color)}"></span>${escapeHtml(c.color)}</span>` : ""}
+      </div>
+      <table class="measures">
+        <thead><tr><th>Param (mm)</th><th>Foot</th><th>Last</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${c.notes ? `<div class="date">${escapeHtml(c.notes)}</div>` : ""}
+      <div class="date">Updated ${updated}</div>
+      <div class="card-actions">
+        <button data-edit="${c.id}">Edit</button>
+        <button data-dup="${c.id}">Duplicate</button>
+      </div>
+    `;
+    cardsEl.appendChild(card);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[ch]));
+}
+
+// ---- editor ----
+function buildMeasureInputs() {
+  measureRows.innerHTML = PARAMS.map(p => `
+    <div class="row-4">
+      <span class="nm">${p.label}</span>
+      <input type="number" step="0.1" inputmode="decimal" data-foot="${p.key}" placeholder="—" />
+      <input type="number" step="0.1" inputmode="decimal" data-last="${p.key}" placeholder="—" />
+      <span class="adapt"><input type="checkbox" data-adapt="${p.key}" checked /></span>
+    </div>
+  `).join("");
+}
+
+function openEditor(card) {
+  editingId = card ? card.id : null;
+  el("modalTitle").textContent = card ? "Edit Card" : "New Card";
+  el("deleteBtn").style.display = card ? "inline-block" : "none";
+
+  el("f-name").value = card?.name || "";
+  el("f-system").value = card?.system || "US Men";
+  el("f-size").value = card?.size || "";
+  el("f-width").value = card?.width || "D";
+  el("f-side").value = card?.side || "Right";
+  el("f-color").value = card?.color || "";
+  el("f-notes").value = card?.notes || "";
+
+  for (const p of PARAMS) {
+    const m = (card?.measures && card.measures[p.key]) || {};
+    form.querySelector(`[data-foot="${p.key}"]`).value = m.foot ?? "";
+    form.querySelector(`[data-last="${p.key}"]`).value = m.last ?? "";
+    form.querySelector(`[data-adapt="${p.key}"]`).checked = card ? !!m.adapt : true;
+  }
+
+  overlay.classList.add("open");
+  el("f-name").focus();
+}
+
+function closeEditor() {
+  overlay.classList.remove("open");
+  editingId = null;
+}
+
+function readForm() {
+  const measures = {};
+  for (const p of PARAMS) {
+    measures[p.key] = {
+      foot: form.querySelector(`[data-foot="${p.key}"]`).value,
+      last: form.querySelector(`[data-last="${p.key}"]`).value,
+      adapt: form.querySelector(`[data-adapt="${p.key}"]`).checked,
+    };
+  }
+  return {
+    name: el("f-name").value.trim(),
+    system: el("f-system").value,
+    size: el("f-size").value.trim(),
+    width: el("f-width").value,
+    side: el("f-side").value,
+    color: el("f-color").value.trim(),
+    notes: el("f-notes").value.trim(),
+    measures,
+  };
+}
+
+// ---- events ----
+el("newBtn").addEventListener("click", () => openEditor(null));
+el("cancelBtn").addEventListener("click", closeEditor);
+overlay.addEventListener("click", (e) => { if (e.target === overlay) closeEditor(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("open")) closeEditor(); });
+searchEl.addEventListener("input", render);
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const data = readForm();
+  if (editingId) {
+    const i = cards.findIndex(c => c.id === editingId);
+    if (i >= 0) cards[i] = { ...cards[i], ...data, updated: Date.now() };
+  } else {
+    cards.push({ id: uid(), ...data, created: Date.now(), updated: Date.now() });
+  }
+  saveCards(cards);
+  render();
+  closeEditor();
+});
+
+el("deleteBtn").addEventListener("click", () => {
+  if (editingId && confirm("Delete this card? This cannot be undone.")) {
+    cards = cards.filter(c => c.id !== editingId);
+    saveCards(cards);
+    render();
+    closeEditor();
+  }
+});
+
+cardsEl.addEventListener("click", (e) => {
+  const editId = e.target.getAttribute("data-edit");
+  const dupId = e.target.getAttribute("data-dup");
+  if (editId) {
+    const c = cards.find(x => x.id === editId);
+    if (c) openEditor(c);
+  } else if (dupId) {
+    const c = cards.find(x => x.id === dupId);
+    if (c) {
+      cards.push({ ...structuredClone(c), id: uid(), name: c.name + " (copy)", created: Date.now(), updated: Date.now() });
+      saveCards(cards);
+      render();
+    }
+  }
+});
+
+// ---- export / import ----
+el("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(cards, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "foot-measurement-cards.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+el("importBtn").addEventListener("click", () => el("fileInput").click());
+el("fileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      if (!Array.isArray(imported)) throw new Error("Not a card list");
+      const existing = new Set(cards.map(c => c.id));
+      for (const c of imported) {
+        if (!c.id || existing.has(c.id)) c.id = uid();
+        cards.push(c);
+      }
+      saveCards(cards);
+      render();
+      alert(`Imported ${imported.length} card(s).`);
+    } catch (err) {
+      alert("Could not import file: " + err.message);
+    }
+    el("fileInput").value = "";
+  };
+  reader.readAsText(file);
+});
+
+// ---- init ----
+buildMeasureInputs();
+render();
+</script>
+</body>
+</html>
